@@ -1,9 +1,10 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
+  //url                  = "mysql://wrva2r0tftpfgaqzetal:pscale_pw_nKpFwQSIo7aUnkkwBp7LXEAm4WGLnE7NDK4io6INOw3@aws.connect.psdb.cloud/dobplanetscale?sslaccept=strict"
 
 datasource db {
   provider             = "mysql"
-  url                  = "mysql://wrva2r0tftpfgaqzetal:pscale_pw_nKpFwQSIo7aUnkkwBp7LXEAm4WGLnE7NDK4io6INOw3@aws.connect.psdb.cloud/dobplanetscale?sslaccept=strict"
+  url                  = env("DATABASE_URL")
   relationMode         = "prisma"
 }
 
