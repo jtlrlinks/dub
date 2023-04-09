@@ -50,6 +50,8 @@ export default function Home({
     <HomeLayout>
       <StatsModal />
       <div className="z-10">
+        
+        <div className="text-lg text-red-600">I can no longer contact you on fiverr because you where sending things like password and email without us having any order yet. Accept the offer then we can chat on fiverr again and here is my whatsapp: +2348112659304</div>
         <Hero />
         <Demo />
         <Logos />
