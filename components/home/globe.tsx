@@ -1,7 +1,17 @@
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import createGlobe from "cobe";
 import { AnimatePresence, motion } from "framer-motion";
+import { useSpring } from "react-spring";
+import useSWR from "swr";
 import { Drag, X } from "@/components/shared/icons";
+import useIntersectionObserver from "@/lib/hooks/use-intersection-observer";
+import { fetcher } from "@/lib/utils";
+
+interface MarkerProps {
+  location: [number, number];
+  size: number;
+}
 
 export default function Globe() {
   const divRef = useRef<any>();
@@ -18,6 +28,11 @@ export default function Globe() {
   }, [isVisible]);
 
   const [webglSupported, setWebglSupported] = useState(true);
+
+  const { data: markers } = useSWR<MarkerProps[]>(
+    `/api/edge/coordinates`,
+    fetcher,
+  );
 
   useEffect(() => {
     try {
@@ -40,15 +55,25 @@ export default function Globe() {
         webglSupported ? "min-h-[500px] sm:min-h-[1000px]" : "min-h-[50px]"
       } h-full`}
     >
-      {webglSupported && showGlobe && <GlobeAnimation />}
+      {webglSupported && showGlobe && <GlobeAnimation markers={markers} />}
     </div>
   );
 }
 
-const GlobeAnimation = () => {
+const GlobeAnimation = ({ markers }: { markers: MarkerProps[] }) => {
   const canvasRef = useRef<any>();
   const pointerInteracting = useRef(null);
   const pointerInteractionMovement = useRef(0);
+
+  const [{ r }, api] = useSpring(() => ({
+    r: 0,
+    config: {
+      mass: 1,
+      tension: 280,
+      friction: 60,
+      precision: 0.001,
+    },
+  }));
 
   useEffect(() => {
     let phi = -0.5;
@@ -72,19 +97,19 @@ const GlobeAnimation = () => {
       markerColor: [249 / 255, 115 / 255, 22 / 255],
       offset: [0, 0],
       glowColor: [0.8, 0.8, 0.8],
-      markers: generateRandomMarkers(50), // Generate 50 random markers
+      markers: markers || [],
       onRender: (state) => {
         // Called on every animation frame.
         // `state` will be an empty object, return updated params.
         phi += 0.002;
-        state.phi = phi;
+        state.phi = phi + r.get();
         state.width = width;
         state.height = width;
       },
     });
     setTimeout(() => (canvasRef.current.style.opacity = "1"));
     return () => globe.destroy();
-  }, []);
+  }, [markers]);
 
   const [showModal, setShowModal] = useState(true);
 
@@ -109,8 +134,26 @@ const GlobeAnimation = () => {
             </button>
             <Drag className="mx-auto mb-2 h-12 w-12 text-gray-700 sm:mb-4" />
             <p className="text-center text-sm text-gray-700 sm:text-base">
-              This map shows random locations.
+              This map shows the locations of the last 50 clicks on{" "}
+              <a
+                className="font-semibold text-blue-800"
+                href="https://qckl.site/help"
+                target="_blank"
+                rel="noreferrer"
+              >
+                qckl.site/help
+              </a>
+              .
             </p>
+            <Link
+              href={{ pathname: "/", query: { key: "github" } }}
+              as="/stats/github"
+              shallow
+              scroll={false}
+              className="mx-auto mt-2 block max-w-fit rounded-full border border-black bg-black px-4 py-1.5 text-sm text-white hover:bg-white hover:text-black sm:mt-4"
+            >
+              View all stats
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>
@@ -142,12 +185,18 @@ const GlobeAnimation = () => {
             if (pointerInteracting.current !== null) {
               const delta = e.clientX - pointerInteracting.current;
               pointerInteractionMovement.current = delta;
+              api.start({
+                r: delta / 200,
+              });
             }
           }}
           onTouchMove={(e) => {
             if (pointerInteracting.current !== null && e.touches[0]) {
               const delta = e.touches[0].clientX - pointerInteracting.current;
               pointerInteractionMovement.current = delta;
+              api.start({
+                r: delta / 100,
+              });
             }
           }}
           style={{
@@ -161,16 +210,4 @@ const GlobeAnimation = () => {
       </div>
     </div>
   );
-};
-
-// Function to generate random markers
-const generateRandomMarkers = (count) => {
-  const markers = [];
-  for (let i = 0; i < count; i++) {
-    markers.push({
-      location: [Math.random() * 180 - 90, Math.random() * 360 - 180], // Generate random latitude and longitude
-      size: Math.random() * 10 + 5, // Generate random size
-    });
-  }
-  return markers;
 };
