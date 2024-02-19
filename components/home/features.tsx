@@ -21,7 +21,7 @@ const featureList = [
     title: "Analytics that matter",
     icon: <Chart className="h-5 w-5 text-gray-600" />,
     description:
-      "Dub provides powerful analytics for your links, including geolocation, device, browser, and referrer information.",
+      "QCKL provides powerful analytics for your links, including geolocation, device, browser, and referrer information.",
     cta: (
       <Link
         href={{ pathname: "/", query: { key: "github" } }}
